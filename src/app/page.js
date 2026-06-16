@@ -186,6 +186,7 @@ export default async function Home() {
               <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer">WhatsApp</a>
               <a href="https://www.instagram.com/hayalmest" target="_blank" rel="noreferrer">Instagram</a>
               <a href="#rezervasyon">Rezervasyon</a>
+              <Link href="/admin">Yönetici Girişi</Link>
             </div>
             <p className={styles.footerCopyright}>© {new Date().getFullYear()} HayalMest. Tüm hakları saklıdır.</p>
           </div>
