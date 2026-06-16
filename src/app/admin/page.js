@@ -1,59 +1,71 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { DashboardClient } from "@/components/admin/DashboardClient";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import styles from "./admin.module.css";
+export const dynamic = "force-dynamic";
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState({ events: 0, artists: 0, pendingRes: 0, totalRes: 0, gallery: 0, menuCats: 0 });
+export default async function AdminDashboard() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const [evRes, arRes, resRes, galRes, menuRes] = await Promise.all([
-          fetch("/api/admin/events").then(r => r.json()).catch(() => []),
-          fetch("/api/admin/artists").then(r => r.json()).catch(() => []),
-          fetch("/api/admin/reservations").then(r => r.json()).catch(() => []),
-          fetch("/api/admin/gallery").then(r => r.json()).catch(() => []),
-          fetch("/api/admin/menu").then(r => r.json()).catch(() => []),
-        ]);
-        setStats({
-          events: evRes.length || 0,
-          artists: arRes.length || 0,
-          pendingRes: (resRes.filter?.(r => r.status === "PENDING") || []).length,
-          totalRes: resRes.length || 0,
-          gallery: galRes.length || 0,
-          menuCats: menuRes.length || 0,
-        });
-      } catch (e) {
-        console.error("Stats fetch error", e);
-      }
-    }
-    loadStats();
-  }, []);
+  // 1. Fetch Stats
+  const [totalEvents, totalArtists, pendingResCount, totalResCount, galleryCount, menuCatsCount] = await Promise.all([
+    prisma.event.count(),
+    prisma.artist.count(),
+    prisma.reservation.count({ where: { status: "PENDING" } }),
+    prisma.reservation.count(),
+    prisma.memory.count(),
+    prisma.menuCategory.count(),
+  ]);
 
-  const cards = [
-    { label: "Yaklaşan Etkinlikler", value: stats.events, href: "/admin/events", color: "#D4AF37" },
-    { label: "Bekleyen Rezervasyonlar", value: stats.pendingRes, href: "/admin/reservations", color: stats.pendingRes > 0 ? "#ff9900" : "#28a745" },
-    { label: "Toplam Rezervasyonlar", value: stats.totalRes, href: "/admin/reservations", color: "#6c63ff" },
-    { label: "Kayıtlı Sanatçılar", value: stats.artists, href: "/admin/artists", color: "#2563eb" },
-    { label: "Galeri Medyaları", value: stats.gallery, href: "/admin/gallery", color: "#e91e63" },
-    { label: "Menü Kategorileri", value: stats.menuCats, href: "/admin/menu", color: "#00bcd4" },
-  ];
+  const stats = {
+    events: totalEvents,
+    artists: totalArtists,
+    pendingRes: pendingResCount,
+    totalRes: totalResCount,
+    gallery: galleryCount,
+    menuCats: menuCatsCount,
+  };
+
+  // 2. Fetch Upcoming Events (Next 5)
+  const upcomingEvents = await prisma.event.findMany({
+    where: { date: { gte: today } },
+    orderBy: { date: "asc" },
+    take: 5,
+    include: { artist: true },
+  });
+
+  // 3. Fetch Recent Pending Reservations (Last 5)
+  const pendingReservations = await prisma.reservation.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
+  // 4. Fetch Future Reservations to calculate density
+  const futureReservations = await prisma.reservation.findMany({
+    where: { date: { gte: today }, status: { in: ["PENDING", "APPROVED"] } },
+    select: { date: true, guestCount: true },
+  });
+
+  // Calculate density (guests per day)
+  const densityMap = {};
+  futureReservations.forEach(res => {
+    const dateStr = new Date(res.date).toISOString().split("T")[0];
+    if (!densityMap[dateStr]) densityMap[dateStr] = 0;
+    densityMap[dateStr] += res.guestCount;
+  });
+
+  const density = Object.keys(densityMap)
+    .sort() // Sort by date
+    .map(date => ({ date, count: densityMap[date] }))
+    .slice(0, 7); // Show next 7 active days
 
   return (
-    <div>
-      <h1 style={{ marginBottom: "2rem", color: "#333" }}>Hoş Geldiniz, HayalMest Yönetimi</h1>
-      <div className={styles.grid}>
-        {cards.map((card) => (
-          <Link key={card.label} href={card.href} style={{ textDecoration: "none" }}>
-            <div className={styles.card} style={{ cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderLeft: `4px solid ${card.color}` }}>
-              <div className={styles.cardTitle}>{card.label}</div>
-              <div className={styles.cardValue} style={{ color: card.color }}>{card.value}</div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <DashboardClient 
+      stats={stats} 
+      upcomingEvents={upcomingEvents} 
+      pendingReservations={pendingReservations} 
+      density={density} 
+    />
   );
 }
