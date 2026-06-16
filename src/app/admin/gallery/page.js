@@ -6,7 +6,7 @@ export default function GalleryPage() {
   const [items, setItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ type: "IMAGE", url: "", caption: "" });
+  const [form, setForm] = useState({ type: "IMAGE", url: "", caption: "", showOnHome: true });
   const [uploading, setUploading] = useState(false);
   const [fileError, setFileError] = useState("");
 
@@ -27,7 +27,7 @@ export default function GalleryPage() {
 
   const openEdit = (item) => {
     setEditing(item);
-    setForm({ type: item.type, url: item.url, caption: item.caption || "" });
+    setForm({ type: item.type, url: item.url, caption: item.caption || "", showOnHome: item.showOnHome !== false });
     setFileError("");
     setShowModal(true);
   };
@@ -96,6 +96,15 @@ export default function GalleryPage() {
     fetchItems();
   };
 
+  const handleToggleShowOnHome = async (item) => {
+    await fetch(`/api/admin/gallery/${item.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: item.type, url: item.url, caption: item.caption, showOnHome: !item.showOnHome }),
+    });
+    fetchItems();
+  };
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
@@ -123,9 +132,18 @@ export default function GalleryPage() {
               <div style={{ padding: "0.75rem" }}>
                 <span style={badgeStyle}>{item.type === "IMAGE" ? "📷 Fotoğraf" : "🎥 Video"}</span>
                 {item.caption && <p style={{ color: "#666", fontSize: "0.85rem", marginTop: "0.5rem" }}>{item.caption}</p>}
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
                   <button onClick={() => openEdit(item)} style={editBtn}>Düzenle</button>
                   <button onClick={() => handleDelete(item.id)} style={deleteBtn}>Sil</button>
+                  <button 
+                    onClick={() => handleToggleShowOnHome(item)} 
+                    style={{
+                      ...toggleBtn,
+                      color: item.showOnHome ? "#16a34a" : "#9ca3af"
+                    }}
+                  >
+                    {item.showOnHome ? "👁 Ana Sayfada Açık" : "🚫 Ana Sayfada Gizli"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -172,6 +190,12 @@ export default function GalleryPage() {
                 <label style={labelStyle}>Açıklama (İsteğe Bağlı)</label>
                 <input style={inputStyle} value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} />
               </div>
+              <div style={fieldStyle}>
+                <label style={{...labelStyle, display: "flex", alignItems: "center", gap: "0.5rem"}}>
+                  <input type="checkbox" checked={form.showOnHome} onChange={(e) => setForm({ ...form, showOnHome: e.target.checked })} />
+                  Ana Sayfada Göster
+                </label>
+              </div>
               <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
                 <button type="submit" style={btnStyle} disabled={!form.url || uploading}>{editing ? "Güncelle" : "Yayınla"}</button>
                 <button type="button" onClick={() => setShowModal(false)} style={cancelBtn} disabled={uploading}>İptal</button>
@@ -188,6 +212,7 @@ const btnStyle = { padding: "0.6rem 1.2rem", background: "#1a1a1a", color: "#D4A
 const cancelBtn = { padding: "0.6rem 1.2rem", background: "#f5f5f5", color: "#333", border: "1px solid #ddd", borderRadius: 6, cursor: "pointer", fontWeight: 500 };
 const editBtn = { background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontWeight: 500, fontSize: "0.85rem" };
 const deleteBtn = { background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 500, fontSize: "0.85rem" };
+const toggleBtn = { background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.80rem", marginLeft: "auto" };
 const cardStyle = { background: "#fff", borderRadius: 8, border: "1px solid #eaeaea", overflow: "hidden" };
 const badgeStyle = { display: "inline-block", padding: "2px 8px", background: "#f5f5f5", borderRadius: 4, fontSize: "0.8rem", color: "#666" };
 const overlay = { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };

@@ -79,6 +79,7 @@ model Memory {
   type      String   // IMAGE or VIDEO
   url       String
   caption   String?
+  showOnHome Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

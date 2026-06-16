@@ -12,10 +12,16 @@
   background: #1a1a1a;
   padding: 2.5rem;
   border-radius: 12px;
-  width: 100%;
+  width: 90%;
   max-width: 400px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
   border: 1px solid #D4AF37;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 1.5rem;
+  }
 }
 
 .title {
@@ -80,4 +86,20 @@
 
 .button:hover {
   background: #b5952f;
+}
+
+.backButton {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.backButton a {
+  color: #aaa;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.backButton a:hover {
+  color: #D4AF37;
 }

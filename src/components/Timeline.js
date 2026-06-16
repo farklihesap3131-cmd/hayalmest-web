@@ -36,6 +36,16 @@ export function Timeline({ events }) {
     const handleWheel = (e) => {
       if (e.shiftKey) return; // Browser handles shift+scroll horizontally natively
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        const isScrollingDown = e.deltaY > 0;
+        // Check if we reached the scroll boundaries
+        const isAtRightEdge = Math.ceil(slider.scrollLeft + slider.clientWidth) >= slider.scrollWidth - 1;
+        const isAtLeftEdge = slider.scrollLeft <= 0;
+
+        // If trying to scroll right but we are at the end, let the page scroll down naturally
+        if (isScrollingDown && isAtRightEdge) return;
+        // If trying to scroll left but we are at the beginning, let the page scroll up naturally
+        if (!isScrollingDown && isAtLeftEdge) return;
+
         e.preventDefault();
         slider.scrollBy({
           left: e.deltaY > 0 ? 300 : -300,

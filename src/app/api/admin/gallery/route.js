@@ -20,6 +20,7 @@ export async function POST(request) {
         type: body.type,
         url: body.url,
         caption: body.caption,
+        showOnHome: body.showOnHome !== undefined ? body.showOnHome : true,
       },
     });
     return NextResponse.json(memory, { status: 201 });

@@ -4,6 +4,7 @@ import { Hero } from "@/components/Hero";
 import { IntroSection } from "@/components/IntroSection";
 import { ReservationForm } from "@/components/ReservationForm";
 import { Timeline } from "@/components/Timeline";
+import { MenuTabs } from "@/components/MenuTabs";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import styles from "./home.module.css";
@@ -29,6 +30,7 @@ export default async function Home() {
 
   // Fetch Gallery (Memories)
   const memories = await prisma.memory.findMany({
+    where: { showOnHome: true },
     take: 12,
     orderBy: { createdAt: "desc" },
   });
@@ -114,38 +116,7 @@ export default async function Home() {
           </div>
 
           <div className={styles.menuContainer} data-animate="true">
-            {menuCategories.length === 0 ? (
-              <p className={styles.emptyText}>Menü yakında eklenecektir.</p>
-            ) : (
-              <div className={styles.menuGrid}>
-                {menuCategories.map((category) => (
-                  <div key={category.id} className={styles.menuCategory}>
-                    <h3 className={styles.categoryTitle}>{category.name}</h3>
-                    <ul className={styles.menuList}>
-                      {category.items.map((item) => (
-                        <li key={item.id} className={styles.menuItem}>
-                          {item.imageUrl && (
-                            <div className={styles.menuItemImageContainer}>
-                              <img src={item.imageUrl} alt={item.name} className={styles.menuItemImage} />
-                            </div>
-                          )}
-                          <div className={styles.menuItemContent}>
-                            <div className={styles.menuItemHeader}>
-                              <span className={styles.menuItemName}>{item.name}</span>
-                              <span className={styles.menuItemDots}></span>
-                              <span className={styles.menuItemPrice}>₺{item.price}</span>
-                            </div>
-                            {item.description && (
-                              <p className={styles.menuItemDesc}>{item.description}</p>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
+            <MenuTabs categories={menuCategories} />
           </div>
         </section>
 

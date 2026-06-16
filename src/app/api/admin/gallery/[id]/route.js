@@ -11,6 +11,7 @@ export async function PUT(request, { params }) {
         type: body.type,
         url: body.url,
         caption: body.caption,
+        ...(body.showOnHome !== undefined && { showOnHome: body.showOnHome }),
       },
     });
     return NextResponse.json(memory);

@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
@@ -60,6 +61,9 @@ export default function LoginPage() {
             {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
+        <div className={styles.backButton}>
+          <Link href="/">← Ana Sayfaya Dön</Link>
+        </div>
       </div>
     </div>
   );
