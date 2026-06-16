@@ -13,6 +13,18 @@
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .section {
+    padding: 4rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: 3rem 1rem;
+  }
+}
+
 .sectionHeader {
   text-align: center;
   margin-bottom: 4rem;
@@ -53,6 +65,18 @@
   overflow: hidden;
 }
 
+@media (max-width: 768px) {
+  .reservationSection {
+    padding: 5rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .reservationSection {
+    padding: 4rem 1rem;
+  }
+}
+
 .reservationBg {
   position: absolute;
   top: 0;
@@ -88,6 +112,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 3rem 4rem;
+}
+
+@media (max-width: 768px) {
+  .menuGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
 }
 
 .menuCategory {
@@ -236,6 +267,12 @@
   padding: 4rem 2rem 2rem;
 }
 
+@media (max-width: 768px) {
+  .footer {
+    padding: 3rem 1.5rem 1.5rem;
+  }
+}
+
 .footerContent {
   text-align: center;
 }
@@ -258,6 +295,15 @@
   justify-content: center;
   gap: 2rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .footerLinks {
+    gap: 1rem;
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .footerLinks a {

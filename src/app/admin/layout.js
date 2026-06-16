@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -14,11 +15,14 @@ import {
   Coffee,
   List,
   Mic2,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (pathname === "/admin/login") {
     return children;
@@ -36,9 +40,23 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className={styles.mobileOverlay} 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.logo}>HayalMest Admin</h2>
+          <button 
+            className={styles.mobileCloseBtn}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
         <nav className={styles.nav}>
           {navItems.map((item) => (
@@ -46,6 +64,7 @@ export default function AdminLayout({ children }) {
               key={item.href} 
               href={item.href}
               className={`${styles.navItem} ${pathname === item.href ? styles.active : ""}`}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -61,6 +80,12 @@ export default function AdminLayout({ children }) {
       </aside>
       <main className={styles.mainContent}>
         <div className={styles.topbar}>
+          <button 
+            className={styles.mobileMenuBtn} 
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu size={24} />
+          </button>
           <div className={styles.topbarTitle}>Yönetim Paneli</div>
         </div>
         <div className={styles.contentArea}>

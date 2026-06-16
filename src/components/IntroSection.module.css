@@ -5,6 +5,18 @@
   z-index: 3;
 }
 
+@media (max-width: 768px) {
+  .introSection {
+    padding: 4rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .introSection {
+    padding: 3rem 1rem;
+  }
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -52,6 +64,12 @@
   transition: all 0.4s ease;
   position: relative;
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 2rem 1.5rem;
+  }
 }
 
 .card::before {

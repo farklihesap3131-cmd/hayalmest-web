@@ -125,6 +125,23 @@
   .eventCard:nth-child(even) { margin-top: 150px; }
 }
 
+@media (max-width: 480px) {
+  .eventCard {
+    width: 240px;
+  }
+  .eventCard:nth-child(odd) { margin-top: -120px; }
+  .eventCard:nth-child(even) { margin-top: 120px; }
+  .eventInfo {
+    padding: 1rem;
+  }
+  .eventTitle {
+    font-size: 1.2rem;
+  }
+  .mediaContainer {
+    height: 180px;
+  }
+}
+
 .eventCard:hover {
   transform: scale(1.05);
   border-color: #D4AF37;
