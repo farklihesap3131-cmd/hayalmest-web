@@ -42,10 +42,18 @@ export function ArtistCards({ artists }) {
 
     // Horizontal scroll with mouse wheel
     const onWheel = (e) => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        container.scrollLeft += e.deltaY;
-      }
+      if (e.shiftKey) return; // native horizontal scroll
+      // Only hijack predominantly-vertical wheel gestures
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+
+      const atStart = container.scrollLeft <= 0;
+      const atEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth;
+
+      // At the edges, release the wheel so the page can keep scrolling vertically
+      if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
     };
 
     container.addEventListener("mousedown", onMouseDown);

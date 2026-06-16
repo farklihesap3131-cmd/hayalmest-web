@@ -35,13 +35,20 @@ export function Timeline({ events }) {
     // 1. Mouse Wheel to Horizontal Scroll
     const handleWheel = (e) => {
       if (e.shiftKey) return; // Browser handles shift+scroll horizontally natively
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
-        slider.scrollBy({
-          left: e.deltaY > 0 ? 300 : -300,
-          behavior: 'smooth'
-        });
-      }
+      // Only hijack predominantly-vertical wheel gestures
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+
+      const atStart = slider.scrollLeft <= 0;
+      const atEnd = Math.ceil(slider.scrollLeft + slider.clientWidth) >= slider.scrollWidth;
+
+      // At the edges, release the wheel so the page can keep scrolling vertically
+      if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+
+      e.preventDefault();
+      slider.scrollBy({
+        left: e.deltaY > 0 ? 300 : -300,
+        behavior: 'smooth'
+      });
     };
 
     // 2. Grab and Drag to Scroll
