@@ -13,6 +13,7 @@ export async function PUT(request, { params }) {
     if (body.note !== undefined) data.note = body.note;
     if (body.date !== undefined) data.date = new Date(body.date);
     if (body.guestCount !== undefined) data.guestCount = parseInt(body.guestCount);
+    if (body.tableId !== undefined) data.tableId = body.tableId === null ? null : parseInt(body.tableId);
 
     const reservation = await prisma.reservation.update({
       where: { id: Number(id) },

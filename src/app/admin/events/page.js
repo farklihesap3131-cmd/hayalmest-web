@@ -86,62 +86,56 @@ export default function EventsPage() {
   const isVideo = (url) => url && (url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg"));
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h1 style={{ color: "#333", margin: 0 }}>Etkinlik & Takvim Yönetimi</h1>
-        <button onClick={openCreate} style={btnStyle}>+ Yeni Etkinlik</button>
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <div>
+          <h1 style={{ color: "#fff", margin: 0, fontSize: "1.8rem" }}>Etkinlikler & Takvim</h1>
+          <p style={{ color: "#888", marginTop: "0.5rem" }}>Yaklaşan programları koyu tema ile yönetin.</p>
+        </div>
+        <button onClick={openCreate} style={createBtnStyle}>+ Yeni Etkinlik</button>
       </div>
 
-      <div style={tableWrap}>
-        <table style={tableStyle}>
-          <thead>
-            <tr style={thRowStyle}>
-              <th style={thStyle}>Afiş</th>
-              <th style={thStyle}>Tarih</th>
-              <th style={thStyle}>Başlık</th>
-              <th style={thStyle}>Sanatçı</th>
-              <th style={thStyle}>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.length === 0 ? (
-              <tr><td colSpan="5" style={{ padding: "2rem", textAlign: "center", color: "#999" }}>Henüz etkinlik bulunmuyor.</td></tr>
-            ) : (
-              events.map((ev) => (
-                <tr key={ev.id} style={trStyle}>
-                  <td style={tdStyle}>
-                    {ev.posterUrl ? (
-                      isVideo(ev.posterUrl) ? (
-                        <video src={ev.posterUrl} style={{ width: 60, height: 40, objectFit: "cover", borderRadius: 4 }} autoPlay loop muted playsInline />
-                      ) : (
-                        <img src={ev.posterUrl} alt="" style={{ width: 60, height: 40, objectFit: "cover", borderRadius: 4 }} />
-                      )
-                    ) : (
-                      <span style={{ color: "#ccc" }}>—</span>
-                    )}
-                  </td>
-                  <td style={tdStyle}>{new Date(ev.date).toLocaleDateString("tr-TR")}</td>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{ev.title}</td>
-                  <td style={tdStyle}>{ev.artist?.name || "—"}</td>
-                  <td style={tdStyle}>
-                    <button onClick={() => openEdit(ev)} style={editBtn}>Düzenle</button>
-                    <button onClick={() => handleDelete(ev.id)} style={deleteBtn}>Sil</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div style={gridStyle}>
+        {events.length === 0 ? (
+          <div style={emptyStateStyle}>Henüz etkinlik bulunmuyor.</div>
+        ) : (
+          events.map((ev) => (
+            <div key={ev.id} style={cardStyle}>
+              <div style={cardMediaWrap}>
+                {ev.posterUrl ? (
+                  isVideo(ev.posterUrl) ? (
+                    <video src={ev.posterUrl} style={cardMedia} autoPlay loop muted playsInline />
+                  ) : (
+                    <img src={ev.posterUrl} alt={ev.title} style={cardMedia} />
+                  )
+                ) : (
+                  <div style={placeholderMedia}>Afiş Yok</div>
+                )}
+                <div style={dateBadge}>
+                  {new Date(ev.date).toLocaleDateString("tr-TR", { day: 'numeric', month: 'short' })}
+                </div>
+              </div>
+              <div style={cardContent}>
+                <h3 style={cardTitle}>{ev.title}</h3>
+                <p style={cardSubtitle}>{ev.artist?.name || "Sanatçı Belirtilmedi"}</p>
+                <div style={cardActions}>
+                  <button onClick={() => openEdit(ev)} style={editBtn}>Düzenle</button>
+                  <button onClick={() => handleDelete(ev.id)} style={deleteBtn}>Sil</button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {showModal && (
         <div style={overlay}>
           <div style={modal}>
-            <h2 style={{ color: "#333", marginBottom: "1.5rem" }}>{editing ? "Etkinliği Düzenle" : "Yeni Etkinlik"}</h2>
+            <h2 style={{ color: "#fff", marginBottom: "1.5rem" }}>{editing ? "Etkinliği Düzenle" : "Yeni Etkinlik"}</h2>
             
-            <div style={{ border: "2px dashed #ccc", padding: "1rem", textAlign: "center", borderRadius: "8px", marginBottom: "1rem", cursor: "pointer", background: "#f9f9f9" }} onClick={() => setShowMediaSelector(true)}>
+            <div style={uploadZone} onClick={() => setShowMediaSelector(true)}>
               <div style={{ fontSize: "24px", marginBottom: "8px" }}>📸</div>
-              <div style={{ color: "#333", fontWeight: 500 }}>Galeriden Seç veya Yükle</div>
+              <div style={{ color: "#fff", fontWeight: 500 }}>Galeriden Seç veya Yükle</div>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -159,7 +153,7 @@ export default function EventsPage() {
               </div>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Afiş URL</label>
-                <input style={{ ...inputStyle, background: "#f9f9f9" }} value={form.posterUrl} onChange={(e) => setForm({ ...form, posterUrl: e.target.value })} placeholder="/assets/images/..." readOnly />
+                <input style={{ ...inputStyle, background: "#2a2a2a", color: "#888" }} value={form.posterUrl} onChange={(e) => setForm({ ...form, posterUrl: e.target.value })} placeholder="/assets/images/..." readOnly />
               </div>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Sanatçı</label>
@@ -171,7 +165,7 @@ export default function EventsPage() {
                 </select>
               </div>
               <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-                <button type="submit" style={btnStyle} disabled={uploading}>{editing ? "Güncelle" : "Oluştur"}</button>
+                <button type="submit" style={submitBtn} disabled={uploading}>{editing ? "Güncelle" : "Oluştur"}</button>
                 <button type="button" onClick={() => setShowModal(false)} style={cancelBtn} disabled={uploading}>İptal</button>
               </div>
             </form>
@@ -189,18 +183,146 @@ export default function EventsPage() {
   );
 }
 
-const btnStyle = { padding: "0.6rem 1.2rem", background: "#1a1a1a", color: "#D4AF37", border: "1px solid #D4AF37", borderRadius: 6, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" };
-const cancelBtn = { padding: "0.6rem 1.2rem", background: "#f5f5f5", color: "#333", border: "1px solid #ddd", borderRadius: 6, cursor: "pointer", fontWeight: 500 };
-const editBtn = { background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontWeight: 500, marginRight: 8 };
-const deleteBtn = { background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 500 };
-const tableWrap = { background: "#fff", borderRadius: 8, border: "1px solid #eaeaea", overflow: "hidden" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
-const thRowStyle = { borderBottom: "2px solid #eaeaea", background: "#fafafa" };
-const thStyle = { padding: "0.75rem 1rem", color: "#666", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase" };
-const trStyle = { borderBottom: "1px solid #f0f0f0" };
-const tdStyle = { padding: "0.75rem 1rem", fontSize: "0.95rem" };
-const overlay = { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
-const modal = { background: "#fff", borderRadius: 12, padding: "2rem", width: "100%", maxWidth: 500, maxHeight: "90vh", overflow: "auto" };
-const fieldStyle = { marginBottom: "1rem" };
-const labelStyle = { display: "block", marginBottom: 4, fontWeight: 500, color: "#333", fontSize: "0.9rem" };
-const inputStyle = { width: "100%", padding: "0.6rem", border: "1px solid #ddd", borderRadius: 6, fontSize: "0.95rem", boxSizing: "border-box" };
+const containerStyle = {
+  background: "#121212",
+  minHeight: "100vh",
+  padding: "2rem",
+  borderRadius: "12px",
+  color: "#fff"
+};
+
+const headerStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "2.5rem",
+  borderBottom: "1px solid #333",
+  paddingBottom: "1.5rem"
+};
+
+const createBtnStyle = {
+  padding: "0.75rem 1.5rem",
+  background: "#D4AF37",
+  color: "#000",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 600,
+  fontSize: "0.95rem",
+  boxShadow: "0 4px 12px rgba(212, 175, 55, 0.3)",
+  transition: "transform 0.2s"
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gap: "1.5rem"
+};
+
+const emptyStateStyle = {
+  gridColumn: "1 / -1",
+  padding: "4rem",
+  textAlign: "center",
+  color: "#666",
+  background: "#1a1a1a",
+  borderRadius: "12px",
+  border: "1px dashed #333"
+};
+
+const cardStyle = {
+  background: "#1a1a1a",
+  borderRadius: "12px",
+  overflow: "hidden",
+  border: "1px solid #333",
+  transition: "transform 0.3s, box-shadow 0.3s",
+  display: "flex",
+  flexDirection: "column",
+  position: "relative"
+};
+
+const cardMediaWrap = {
+  position: "relative",
+  width: "100%",
+  paddingTop: "100%", // 1:1 Aspect Ratio
+  background: "#000"
+};
+
+const cardMedia = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover"
+};
+
+const placeholderMedia = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#444",
+  background: "#111",
+  fontSize: "1.2rem"
+};
+
+const dateBadge = {
+  position: "absolute",
+  top: "12px",
+  right: "12px",
+  background: "rgba(0,0,0,0.7)",
+  color: "#D4AF37",
+  padding: "6px 12px",
+  borderRadius: "6px",
+  fontWeight: "bold",
+  fontSize: "0.85rem",
+  backdropFilter: "blur(4px)",
+  border: "1px solid rgba(212, 175, 55, 0.3)"
+};
+
+const cardContent = {
+  padding: "1.25rem",
+  display: "flex",
+  flexDirection: "column",
+  flex: 1
+};
+
+const cardTitle = {
+  margin: "0 0 0.25rem 0",
+  fontSize: "1.1rem",
+  fontWeight: 600,
+  color: "#fff"
+};
+
+const cardSubtitle = {
+  margin: 0,
+  fontSize: "0.9rem",
+  color: "#999",
+  flex: 1
+};
+
+const cardActions = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginTop: "1.5rem",
+  paddingTop: "1rem",
+  borderTop: "1px solid #333"
+};
+
+const editBtn = { background: "none", border: "none", color: "#D4AF37", cursor: "pointer", fontWeight: 500, fontSize: "0.9rem" };
+const deleteBtn = { background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 500, fontSize: "0.9rem" };
+
+const overlay = { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(5px)" };
+const modal = { background: "#1a1a1a", border: "1px solid #333", borderRadius: 12, padding: "2rem", width: "100%", maxWidth: 500, maxHeight: "90vh", overflow: "auto" };
+const uploadZone = { border: "2px dashed #444", padding: "1.5rem", textAlign: "center", borderRadius: "8px", marginBottom: "1.5rem", cursor: "pointer", background: "#111", transition: "border 0.2s" };
+
+const fieldStyle = { marginBottom: "1.25rem" };
+const labelStyle = { display: "block", marginBottom: 6, fontWeight: 500, color: "#ccc", fontSize: "0.9rem" };
+const inputStyle = { width: "100%", padding: "0.75rem", background: "#222", color: "#fff", border: "1px solid #333", borderRadius: 6, fontSize: "0.95rem", boxSizing: "border-box" };
+
+const submitBtn = { padding: "0.75rem 1.5rem", background: "#D4AF37", color: "#000", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600, flex: 1 };
+const cancelBtn = { padding: "0.75rem 1.5rem", background: "#333", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 500 };
