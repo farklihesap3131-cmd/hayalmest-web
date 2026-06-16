@@ -39,6 +39,19 @@
   letter-spacing: 2px;
 }
 
+@media (max-width: 768px) {
+  .sectionTitle {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionTitle {
+    font-size: 1.8rem;
+    word-wrap: break-word;
+  }
+}
+
 .titleDivider {
   width: 60px;
   height: 2px;

@@ -138,7 +138,7 @@ export function ReservationForm() {
           />
         </div>
         
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
           <button
             type="submit"
             disabled={status === "loading"}
