@@ -11,7 +11,7 @@ export default function GalleryPage() {
   const [fileError, setFileError] = useState("");
 
   const fetchItems = async () => {
-    const res = await fetch("/api/admin/gallery");
+    const res = await fetch("/api/admin/gallery", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } });
     const data = await res.json();
     setItems(data);
   };
@@ -20,7 +20,7 @@ export default function GalleryPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ type: "IMAGE", url: "", caption: "" });
+    setForm({ type: "IMAGE", url: "", caption: "", showOnHome: true });
     setFileError("");
     setShowModal(true);
   };

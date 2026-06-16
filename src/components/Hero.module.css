@@ -49,8 +49,8 @@
   width: 80vw;
   height: auto;
   margin-bottom: 1rem;
-  filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.5));
-  mix-blend-mode: screen;
+  filter: contrast(1.2) brightness(1.1) drop-shadow(0px 10px 20px rgba(0,0,0,0.5));
+  mix-blend-mode: lighten;
 }
 
 /* Fallback text if logo fails to load */

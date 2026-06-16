@@ -29,7 +29,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError("Hatalı kullanıcı adı veya şifre.");
     } else {
-      router.push("/admin");
+      window.location.href = "/admin";
     }
   };
 
