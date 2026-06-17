@@ -65,7 +65,43 @@ export async function POST(request) {
         return NextResponse.json({ ok: true });
       }
 
-      // Send a typing action to let user know AI is thinking
+      // HYBRID SYSTEM: First try to find a quick reservation match if it's a short query
+      let searchStr = text.toLowerCase("tr-TR");
+      const ignoreWords = ["hangi", "masaya", "rezerve", "nerede", "masası", "masa", "nedir", "kim", "nerde", "oturuyor", "var mı"];
+      ignoreWords.forEach(w => {
+        searchStr = searchStr.replace(new RegExp(`\\b${w}\\b`, 'gi'), '');
+      });
+      searchStr = searchStr.replace(/[?!.]/g, '').trim();
+
+      const wordCount = text.split(" ").length;
+
+      if (wordCount <= 4 && searchStr.length > 2) {
+        const results = await prisma.reservation.findMany({
+          where: { name: { contains: searchStr, mode: 'insensitive' } },
+          include: { tables: { include: { room: true } } },
+          orderBy: { date: 'desc' },
+          take: 3
+        });
+
+        if (results.length > 0) {
+          let reply = `⚡ *Hızlı Arama Sonucu:*\n\n`;
+          results.forEach(res => {
+            const dateStr = res.date ? new Date(res.date).toLocaleDateString("tr-TR") : "Tarih Yok";
+            reply += `👤 *${res.name}* (${dateStr}) - ${res.guestCount} Kişi\n`;
+            if (res.tables && res.tables.length > 0) {
+              const tableNames = res.tables.map(t => `${t.room.name} -> ${t.name}`).join(", ");
+              reply += `🪑 Masalar: ${tableNames}\n`;
+            } else {
+              reply += `🪑 Masa: Henüz masa atanmamış.\n`;
+            }
+            reply += `\n`;
+          });
+          await sendMessage(chatId, reply, "Markdown");
+          return NextResponse.json({ ok: true });
+        }
+      }
+
+      // If no exact match or it's a longer question, fallback to Groq AI
       await fetch(`https://api.telegram.org/bot${token}/sendChatAction`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

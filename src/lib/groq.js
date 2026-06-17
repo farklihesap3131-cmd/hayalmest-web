@@ -83,7 +83,7 @@ ${contextText}
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192", // Fast and good for Turkish
+        model: "llama-3.3-70b-versatile", // Fast and good for Turkish
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: query }
