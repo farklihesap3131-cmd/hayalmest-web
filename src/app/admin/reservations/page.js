@@ -20,9 +20,9 @@ export default function ReservationsPage() {
   const [deleteId, setDeleteId] = useState(null);
 
   // ---------- Fetch ----------
-  const fetchReservations = async () => {
+  const fetchReservations = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch("/api/admin/reservations");
       if (res.ok) {
         const data = await res.json();
@@ -31,12 +31,16 @@ export default function ReservationsPage() {
     } catch (err) {
       console.error("Rezervasyonlar yüklenemedi:", err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchReservations();
+    const interval = setInterval(() => {
+      fetchReservations(false);
+    }, 5000); // Her 5 saniyede bir sessizce yenile
+    return () => clearInterval(interval);
   }, []);
 
   // ---------- Create ----------

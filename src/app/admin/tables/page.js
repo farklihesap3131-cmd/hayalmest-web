@@ -15,6 +15,7 @@ export default function TablesPage() {
   const [draggingTableId, setDraggingTableId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const canvasRef = useRef(null);
+  const dragHasMoved = useRef(false);
 
   // Modal states
   const [showRoomModal, setShowRoomModal] = useState(false);
@@ -28,9 +29,23 @@ export default function TablesPage() {
   }, []);
 
   useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  useEffect(() => {
     if (!isEditMode) {
       fetchReservations();
     }
+    
+    // Auto-refresh interval (every 5 seconds)
+    const interval = setInterval(() => {
+      fetchRooms();
+      if (!isEditMode) {
+        fetchReservations();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [selectedDate, isEditMode]);
 
   const fetchRooms = async () => {
@@ -117,6 +132,7 @@ export default function TablesPage() {
     e.stopPropagation();
     e.target.setPointerCapture(e.pointerId);
     setDraggingTableId(table.id);
+    dragHasMoved.current = false;
     
     const rect = e.target.getBoundingClientRect();
     const canvasRect = canvasRef.current.getBoundingClientRect();
@@ -132,6 +148,8 @@ export default function TablesPage() {
 
   const handlePointerMove = (e) => {
     if (!isEditMode || !draggingTableId || !canvasRef.current) return;
+    dragHasMoved.current = true;
+    
     const canvasRect = canvasRef.current.getBoundingClientRect();
     
     let newX = e.clientX - canvasRect.left - dragOffset.x;
@@ -318,7 +336,12 @@ export default function TablesPage() {
                   onPointerDown={(e) => handlePointerDown(e, table)}
                   onDragOver={handleTableDragOver}
                   onDrop={(e) => handleTableDrop(e, table.id)}
-                  onClick={() => isEditMode ? openTableModal(table) : null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isEditMode && !dragHasMoved.current) {
+                      openTableModal(table);
+                    }
+                  }}
                 >
                   <span className={styles.tableName}>{table.name}</span>
                   <span className={styles.tableCap}>{table.capacity} Kişi</span>
