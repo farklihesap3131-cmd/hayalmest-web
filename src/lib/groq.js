@@ -11,13 +11,13 @@ const tools = [
         type: "object",
         properties: {
           name: { type: "string", description: "Müşteri adı ve soyadı." },
-          phone: { type: "string", description: "Müşteri telefon numarası." },
+          phone: { type: "string", description: "Müşteri telefon numarası. (Eğer kullanıcı numara vermediyse BOŞ BIRAK, kesinlikle sahte numara uydurma!)" },
           date: { type: "string", description: "Rezervasyon tarihi (YYYY-MM-DD formatında)." },
           time: { type: "string", description: "Rezervasyon saati (HH:MM formatında). Örn: 20:00" },
           guestCount: { type: "integer", description: "Kişi sayısı." },
           note: { type: "string", description: "Varsa özel not veya istek." }
         },
-        required: ["name", "phone", "date", "time", "guestCount"]
+        required: ["name", "date", "time", "guestCount"]
       }
     }
   },

@@ -15,6 +15,8 @@ export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
@@ -279,9 +281,13 @@ export default function ReservationsPage() {
                 reservations.map((r) => {
                   const badge = STATUS_MAP[r.status] || STATUS_MAP.PENDING;
                   return (
-                    <tr key={r.id} style={{ transition: "background 0.15s" }}
+                    <tr key={r.id} style={{ transition: "background 0.15s", cursor: "pointer" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      onClick={() => {
+                        setSelectedReservation(r);
+                        setDetailModalOpen(true);
+                      }}
                     >
                       <td style={{ ...tdStyle, fontWeight: 500 }}>{r.name}</td>
                       <td style={tdStyle}>{r.phone || "-"}</td>
@@ -310,16 +316,16 @@ export default function ReservationsPage() {
                       </td>
                       <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                         {r.status !== "APPROVED" && (
-                          <button style={btnApprove} onClick={() => handleStatus(r.id, "APPROVED")}>
+                          <button style={btnApprove} onClick={(e) => { e.stopPropagation(); handleStatus(r.id, "APPROVED"); }}>
                             Onayla
                           </button>
                         )}
                         {r.status !== "REJECTED" && (
-                          <button style={btnReject} onClick={() => handleStatus(r.id, "REJECTED")}>
+                          <button style={btnReject} onClick={(e) => { e.stopPropagation(); handleStatus(r.id, "REJECTED"); }}>
                             Reddet
                           </button>
                         )}
-                        <button style={btnDelete} onClick={() => setDeleteId(r.id)}>
+                        <button style={btnDelete} onClick={(e) => { e.stopPropagation(); setDeleteId(r.id); }}>
                           Sil
                         </button>
                       </td>
@@ -447,6 +453,65 @@ export default function ReservationsPage() {
                 style={{ padding: "0.6rem 1.5rem", background: "#dc3545", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
               >
                 Evet, Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {detailModalOpen && selectedReservation && (
+        <div style={overlayStyle} onClick={() => setDetailModalOpen(false)}>
+          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #eee", paddingBottom: "1rem" }}>
+              <h2 style={{ margin: 0, color: "#1a1a1a", fontSize: "1.25rem" }}>Rezervasyon Detayları</h2>
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "#999", lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div><strong style={labelStyle}>Ad Soyad:</strong> <span style={{fontSize: "1.1rem"}}>{selectedReservation.name}</span></div>
+              <div><strong style={labelStyle}>Telefon:</strong> {selectedReservation.phone || "Belirtilmemiş"}</div>
+              <div><strong style={labelStyle}>Tarih & Saat:</strong> {new Date(selectedReservation.date).toLocaleString("tr-TR")}</div>
+              <div><strong style={labelStyle}>Kişi Sayısı:</strong> {selectedReservation.guestCount}</div>
+              <div>
+                <strong style={labelStyle}>Durum:</strong> 
+                <span style={{
+                  padding: "0.2rem 0.6rem", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "bold",
+                  background: STATUS_MAP[selectedReservation.status]?.bg,
+                  color: STATUS_MAP[selectedReservation.status]?.color,
+                }}>
+                  {STATUS_MAP[selectedReservation.status]?.label}
+                </span>
+              </div>
+              <div>
+                <strong style={labelStyle}>Atanan Masalar:</strong> 
+                {selectedReservation.tables && selectedReservation.tables.length > 0 ? (
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                    {selectedReservation.tables.map(t => (
+                      <span key={t.id} style={{ background: "#000", color: "#D4AF37", padding: "0.3rem 0.6rem", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "500" }}>
+                        {t.room.name} - {t.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span style={{ color: "#888" }}> Henüz masa atanmamış.</span>
+                )}
+              </div>
+              <div><strong style={labelStyle}>Notlar:</strong> <div style={{ background: "#f9f9f9", padding: "1rem", borderRadius: "8px", border: "1px solid #eee", marginTop: "0.5rem", minHeight: "50px" }}>{selectedReservation.note || "Not bulunmuyor."}</div></div>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setDetailModalOpen(false)}
+                style={{ padding: "0.6rem 1.2rem", background: "#f5f5f5", color: "#333", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontWeight: 500 }}
+              >
+                Kapat
               </button>
             </div>
           </div>
