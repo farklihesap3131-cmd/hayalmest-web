@@ -49,10 +49,19 @@ export async function POST(request) {
 
       if (adminSetting && adminSetting.value) {
         try {
-          adminIds = JSON.parse(adminSetting.value);
+          const parsed = JSON.parse(adminSetting.value);
+          if (Array.isArray(parsed)) {
+            adminIds = parsed.map(String); // Ensure all are strings
+          } else {
+            adminIds = [adminSetting.value.toString()];
+            await prisma.setting.update({
+              where: { key: "telegram_chat_id" },
+              data: { value: JSON.stringify(adminIds) }
+            });
+          }
         } catch (e) {
           // Backward compatibility for old single string ID
-          adminIds = [adminSetting.value];
+          adminIds = [adminSetting.value.toString()];
           await prisma.setting.update({
             where: { key: "telegram_chat_id" },
             data: { value: JSON.stringify(adminIds) }
@@ -168,8 +177,12 @@ export async function POST(request) {
         const adminSetting = await prisma.setting.findUnique({ where: { key: "telegram_chat_id" } });
         let adminIds = [];
         if (adminSetting && adminSetting.value) {
-          try { adminIds = JSON.parse(adminSetting.value); } 
-          catch(e) { adminIds = [adminSetting.value]; }
+          try { 
+            const parsed = JSON.parse(adminSetting.value); 
+            if (Array.isArray(parsed)) adminIds = parsed.map(String);
+            else adminIds = [adminSetting.value.toString()];
+          } 
+          catch(e) { adminIds = [adminSetting.value.toString()]; }
         }
         if (!adminIds.includes(newAdminId)) {
           adminIds.push(newAdminId);
