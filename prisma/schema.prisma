@@ -50,6 +50,8 @@ model Reservation {
   guestCount Int
   status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
   note      String?
+  customerId Int?
+  customer  Customer? @relation(fields: [customerId], references: [id])
   tables    Table[]  @relation("TableReservations")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,4 +125,14 @@ model Banner {
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id           Int           @id @default(autoincrement())
+  name         String
+  phone        String        @unique
+  optOut       Boolean       @default(false)
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }

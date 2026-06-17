@@ -218,11 +218,11 @@ export default function ReservationsPage() {
 
   // ---------- Render ----------
   return (
-    <div>
+    <div className={styles.mobilePage}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }} className={styles.mobileHeader}>
         <h1 style={{ color: "#333", fontSize: "1.5rem", margin: 0 }}>Rezervasyon Yönetimi</h1>
-        <button style={btnPrimary} onClick={() => setModalOpen(true)}>
+        <button style={btnPrimary} onClick={() => setModalOpen(true)} className={styles.mobileFullWidth}>
           + Yeni Rezervasyon
         </button>
       </div>
@@ -341,7 +341,7 @@ export default function ReservationsPage() {
       {/* Create Modal */}
       {modalOpen && (
         <div style={overlayStyle} onClick={() => setModalOpen(false)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+          <div style={modalStyle} className={styles.mobileModal} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
               <h2 style={{ margin: 0, color: "#1a1a1a", fontSize: "1.25rem" }}>Yeni Rezervasyon</h2>
               <button
@@ -374,7 +374,7 @@ export default function ReservationsPage() {
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+              <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }} className={styles.mobileFormGroup}>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>Tarih *</label>
                   <input
@@ -434,6 +434,7 @@ export default function ReservationsPage() {
         <div style={overlayStyle} onClick={() => setDeleteId(null)}>
           <div
             style={{ ...modalStyle, maxWidth: "400px", textAlign: "center" }}
+            className={styles.mobileModal}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>⚠️</div>
@@ -462,7 +463,7 @@ export default function ReservationsPage() {
       {/* Detail Modal */}
       {detailModalOpen && selectedReservation && (
         <div style={overlayStyle} onClick={() => setDetailModalOpen(false)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+          <div style={modalStyle} className={styles.mobileModal} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #eee", paddingBottom: "1rem" }}>
               <h2 style={{ margin: 0, color: "#1a1a1a", fontSize: "1.25rem" }}>Rezervasyon Detayları</h2>
               <button
@@ -473,11 +474,11 @@ export default function ReservationsPage() {
               </button>
             </div>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div><strong style={labelStyle}>Ad Soyad:</strong> <span style={{fontSize: "1.1rem"}}>{selectedReservation.name}</span></div>
-              <div><strong style={labelStyle}>Telefon:</strong> {selectedReservation.phone || "Belirtilmemiş"}</div>
-              <div><strong style={labelStyle}>Tarih & Saat:</strong> {new Date(selectedReservation.date).toLocaleString("tr-TR")}</div>
-              <div><strong style={labelStyle}>Kişi Sayısı:</strong> {selectedReservation.guestCount}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem", color: "#333" }}>
+              <div><strong style={labelStyle}>Ad Soyad:</strong> <span style={{fontSize: "1.1rem", color: "#111"}}>{selectedReservation.name}</span></div>
+              <div><strong style={labelStyle}>Telefon:</strong> <span style={{color: "#333"}}>{selectedReservation.phone || "Belirtilmemiş"}</span></div>
+              <div><strong style={labelStyle}>Tarih & Saat:</strong> <span style={{color: "#333"}}>{new Date(selectedReservation.date).toLocaleString("tr-TR")}</span></div>
+              <div><strong style={labelStyle}>Kişi Sayısı:</strong> <span style={{color: "#333"}}>{selectedReservation.guestCount}</span></div>
               <div>
                 <strong style={labelStyle}>Durum:</strong> 
                 <span style={{

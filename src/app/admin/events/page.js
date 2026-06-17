@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MediaSelector } from "@/components/MediaSelector";
+import styles from "../admin.module.css";
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -86,13 +87,13 @@ export default function EventsPage() {
   const isVideo = (url) => url && (url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg"));
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
+    <div style={containerStyle} className={styles.mobilePage}>
+      <div style={headerStyle} className={styles.mobileHeader}>
         <div>
           <h1 style={{ color: "#fff", margin: 0, fontSize: "1.8rem" }}>Etkinlikler & Takvim</h1>
           <p style={{ color: "#888", marginTop: "0.5rem" }}>Yaklaşan programları koyu tema ile yönetin.</p>
         </div>
-        <button onClick={openCreate} style={createBtnStyle}>+ Yeni Etkinlik</button>
+        <button onClick={openCreate} style={createBtnStyle} className={styles.mobileFullWidth}>+ Yeni Etkinlik</button>
       </div>
 
       <div style={gridStyle}>
@@ -130,7 +131,7 @@ export default function EventsPage() {
 
       {showModal && (
         <div style={overlay}>
-          <div style={modal}>
+          <div style={modal} className={styles.mobileModal}>
             <h2 style={{ color: "#fff", marginBottom: "1.5rem" }}>{editing ? "Etkinliği Düzenle" : "Yeni Etkinlik"}</h2>
             
             <div style={uploadZone} onClick={() => setShowMediaSelector(true)}>

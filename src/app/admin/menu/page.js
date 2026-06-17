@@ -260,11 +260,11 @@ export default function MenuPage() {
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <div>
+    <div className={styles.mobilePage}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }} className={styles.mobileHeader}>
         <h1 style={{ color: "#333", margin: 0 }}>Menü Yönetimi</h1>
-        <button style={btnPrimary} onClick={openNewCategory}>
+        <button style={btnPrimary} onClick={openNewCategory} className={styles.mobileFullWidth}>
           + Yeni Kategori Ekle
         </button>
       </div>
@@ -350,12 +350,13 @@ export default function MenuPage() {
                     Bu kategoride henüz ürün yok.
                   </p>
                 ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #eaeaea" }}>
-                        <th style={{ padding: "0.65rem 0.75rem", color: "#666", fontSize: "0.85rem", fontWeight: 600 }}>
-                          Görsel
-                        </th>
+                  <div className={styles.mobileTableWrapper}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "2px solid #eaeaea" }}>
+                          <th style={{ padding: "0.65rem 0.75rem", color: "#666", fontSize: "0.85rem", fontWeight: 600 }}>
+                            Görsel
+                          </th>
                         <th style={{ padding: "0.65rem 0.75rem", color: "#666", fontSize: "0.85rem", fontWeight: 600 }}>
                           Ürün Adı
                         </th>
@@ -407,6 +408,7 @@ export default function MenuPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}
@@ -417,7 +419,7 @@ export default function MenuPage() {
       {/* ── MODALS ─────────────────────────────────────────────────── */}
       {modal && (
         <div style={overlay} onClick={closeModal}>
-          <div style={modalBox} onClick={(e) => e.stopPropagation()}>
+          <div style={modalBox} className={styles.mobileModal} onClick={(e) => e.stopPropagation()}>
             {/* ─ New Category ─ */}
             {modal.type === "newCategory" && (
               <>

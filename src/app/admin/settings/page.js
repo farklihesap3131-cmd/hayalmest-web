@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MediaSelector } from "@/components/MediaSelector";
+import styles from "../admin.module.css";
 
 const DEFAULT_SETTINGS = [
   { key: "whatsapp_number", label: "WhatsApp Numarası", placeholder: "905305012458" },
@@ -75,15 +76,15 @@ export default function SettingsPage() {
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+    <div className={styles.mobilePage}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }} className={styles.mobileHeader}>
         <h1 style={{ color: "#333", margin: 0 }}>Site Ayarları</h1>
-        <button onClick={handleSave} disabled={saving} style={btnStyle}>
+        <button onClick={handleSave} disabled={saving} style={btnStyle} className={styles.mobileFullWidth}>
           {saving ? "Kaydediliyor..." : saved ? "✓ Kaydedildi!" : "Kaydet"}
         </button>
       </div>
 
-      <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "1fr 1fr" }}>
+      <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "1fr 1fr" }} className={styles.mobileFormGroup}>
         {/* Left Column: Text Settings */}
         <div style={{ background: "#fff", borderRadius: 8, border: "1px solid #eaeaea", padding: "2rem" }}>
           <h2 style={{ margin: "0 0 1.5rem", fontSize: "1.2rem", color: "#1a1a1a" }}>Genel Ayarlar</h2>

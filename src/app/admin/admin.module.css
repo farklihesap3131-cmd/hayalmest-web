@@ -347,3 +347,13 @@
   font-weight: bold;
   color: #333;
 }
+  
+/* Mobile Overrides */  
+@media (max-width: 768px) {  
+  .mobilePage { padding: 16px !important; }  
+  .mobileModal { padding: 16px !important; width: 95% !important; margin: 10px; max-height: 90vh; }  
+  .mobileFormGroup { flex-direction: column !important; gap: 10px !important; }  
+  .mobileTableWrapper { overflow-x: auto !important; padding: 10px !important; }  
+  .mobileHeader { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }  
+  .mobileFullWidth { width: 100% !important; }  
+} 

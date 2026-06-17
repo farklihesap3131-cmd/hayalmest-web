@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import styles from "../admin.module.css";
 
 export default function GalleryPage() {
   const [items, setItems] = useState([]);
@@ -106,10 +107,10 @@ export default function GalleryPage() {
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+    <div className={styles.mobilePage}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }} className={styles.mobileHeader}>
         <h1 style={{ color: "#333", margin: 0 }}>Dosya Yöneticisi & Galeri</h1>
-        <button onClick={openCreate} style={btnStyle}>+ Yeni Medya Yükle</button>
+        <button onClick={openCreate} style={btnStyle} className={styles.mobileFullWidth}>+ Yeni Medya Yükle</button>
       </div>
 
       <div style={{ marginBottom: "2rem", padding: "1rem", background: "#f8f9fa", borderRadius: "8px", border: "1px solid #e9ecef" }}>
@@ -153,7 +154,7 @@ export default function GalleryPage() {
 
       {showModal && (
         <div style={overlay}>
-          <div style={modal}>
+          <div style={modal} className={styles.mobileModal}>
             <h2 style={{ color: "#333", marginBottom: "1.5rem" }}>{editing ? "Medyayı Düzenle" : "Cihazdan Yeni Yükle"}</h2>
             
             {/* FILE UPLOAD SECTION */}

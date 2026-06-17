@@ -24,8 +24,8 @@ export function DashboardClient({ stats, upcomingEvents, pendingReservations, de
   ];
 
   return (
-    <div className={styles.dashboardLayout}>
-      <h1 style={{ color: "#333", margin: 0 }}>Sistem Özeti</h1>
+    <div className={`${styles.dashboardLayout} ${styles.mobilePage}`}>
+      <h1 style={{ color: "#333", margin: 0 }} className={styles.mobileHeader}>Sistem Özeti</h1>
       
       {/* Top Stats */}
       <div className={styles.grid}>

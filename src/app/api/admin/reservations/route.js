@@ -15,6 +15,20 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
+    let customerId = null;
+    if (body.phone) {
+      const cleanPhone = body.phone.replace(/\s+/g, '');
+      const existingCustomer = await prisma.customer.findUnique({ where: { phone: cleanPhone } });
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const newCustomer = await prisma.customer.create({
+          data: { name: body.name, phone: cleanPhone }
+        });
+        customerId = newCustomer.id;
+      }
+    }
+
     const reservation = await prisma.reservation.create({
       data: {
         name: body.name,
@@ -23,6 +37,7 @@ export async function POST(request) {
         guestCount: parseInt(body.guestCount),
         status: body.status || "PENDING",
         note: body.note,
+        customerId: customerId,
       },
     });
     // ── TELEGRAM NOTIFICATION ──

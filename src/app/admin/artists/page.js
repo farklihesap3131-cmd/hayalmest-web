@@ -401,12 +401,13 @@ export default function ArtistsPage() {
 
   // ── Render ──────────────────────────────────────────────
   return (
-    <div style={S.page}>
+    <div style={S.page} className={styles.mobilePage}>
       {/* Header */}
-      <div style={S.header}>
+      <div style={S.header} className={styles.mobileHeader}>
         <h1 style={S.title}>🎨 Sanatçı Yönetimi</h1>
         <button
           style={S.addBtn}
+          className={styles.mobileFullWidth}
           onClick={openCreate}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -498,7 +499,7 @@ export default function ArtistsPage() {
       {/* ── Create / Edit Modal ──────────────────────────── */}
       {modalOpen && (
         <div style={S.overlay} onClick={closeModal}>
-          <div style={S.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={S.modal} className={styles.mobileModal} onClick={(e) => e.stopPropagation()}>
             <h2 style={S.modalTitle}>
               {editing ? "Sanatçıyı Düzenle" : "Yeni Sanatçı Ekle"}
             </h2>
@@ -586,6 +587,7 @@ export default function ArtistsPage() {
         >
           <div
             style={S.confirmBox}
+            className={styles.mobileModal}
             onClick={(e) => e.stopPropagation()}
           >
             <p style={S.confirmText}>

@@ -36,6 +36,7 @@ export default function AdminLayout({ children }) {
     { href: "/admin/reservations", label: "Rezervasyonlar", icon: <List size={20} /> },
     { href: "/admin/menu", label: "Menü Yönetimi", icon: <Coffee size={20} /> },
     { href: "/admin/tables", label: "Masa Yönetimi", icon: <LayoutDashboard size={20} /> },
+    { href: "/admin/crm", label: "Müşteriler (CRM)", icon: <Users size={20} /> },
     { href: "/admin/gallery", label: "Galeri (Anılar)", icon: <ImageIcon size={20} /> },
     { href: "/admin/settings", label: "Ayarlar", icon: <Settings size={20} /> },
   ];
