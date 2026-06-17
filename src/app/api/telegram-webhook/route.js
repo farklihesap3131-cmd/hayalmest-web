@@ -41,22 +41,63 @@ export async function POST(request) {
       const chatId = body.message.chat.id.toString();
       const text = body.message.text || "";
       
-      // Check Privacy
-      const existingChatIdSetting = await prisma.setting.findUnique({
+      // Admin Auth Flow
+      let adminIds = [];
+      const adminSetting = await prisma.setting.findUnique({
         where: { key: "telegram_chat_id" }
       });
 
-      if (!existingChatIdSetting || !existingChatIdSetting.value) {
+      if (adminSetting && adminSetting.value) {
+        try {
+          adminIds = JSON.parse(adminSetting.value);
+        } catch (e) {
+          // Backward compatibility for old single string ID
+          adminIds = [adminSetting.value];
+          await prisma.setting.update({
+            where: { key: "telegram_chat_id" },
+            data: { value: JSON.stringify(adminIds) }
+          });
+        }
+      }
+
+      if (adminIds.length === 0) {
         // First time setup: claim ownership
+        adminIds = [chatId];
         await prisma.setting.upsert({
           where: { key: "telegram_chat_id" },
-          update: { value: chatId },
-          create: { key: "telegram_chat_id", value: chatId },
+          update: { value: JSON.stringify(adminIds) },
+          create: { key: "telegram_chat_id", value: JSON.stringify(adminIds) },
         });
-        await sendMessage(chatId, "✅ Sistem Yöneticisi olarak kaydedildiniz. Bot artık sadece size hizmet verecek.");
-      } else if (existingChatIdSetting.value !== chatId) {
-        // Unauthorized user
-        await sendMessage(chatId, "🚫 Bu özel bir işletme botudur. Yetkisiz erişim tespit edildi.");
+        await sendMessage(chatId, "✅ Sistem Yöneticisi olarak kaydedildiniz. Bot artık ilk size hizmet verecek.");
+      } else if (!adminIds.includes(chatId)) {
+        // Unauthorized user requesting access
+        const userName = body.message.chat.first_name || "Bilinmiyor";
+        const lastName = body.message.chat.last_name || "";
+        const fullName = `${userName} ${lastName}`.trim();
+        
+        await sendMessage(chatId, "🚫 Yetkisiz erişim. Sistem yöneticisine giriş talebiniz iletildi. Lütfen onay bekleyin.");
+        
+        // Notify Super Admin (first admin in array)
+        const superAdminId = adminIds[0];
+        const payload = {
+          chat_id: superAdminId,
+          text: `🔔 *Yeni Erişim Talebi*\n\nAdı: ${fullName}\nID: ${chatId}\n\nBu kullanıcının sistemi kullanmasına izin veriyor musunuz?`,
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "✅ Onayla", callback_data: `approve_admin_${chatId}` },
+                { text: "❌ Reddet", callback_data: `reject_admin_${chatId}` }
+              ]
+            ]
+          }
+        };
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
         return NextResponse.json({ ok: true });
       }
 
@@ -122,7 +163,30 @@ export async function POST(request) {
       const chatId = callbackQuery.message.chat.id;
       const messageId = callbackQuery.message.message_id;
 
-      if (data.startsWith("approve_")) {
+      if (data.startsWith("approve_admin_")) {
+        const newAdminId = data.replace("approve_admin_", "");
+        const adminSetting = await prisma.setting.findUnique({ where: { key: "telegram_chat_id" } });
+        let adminIds = [];
+        if (adminSetting && adminSetting.value) {
+          try { adminIds = JSON.parse(adminSetting.value); } 
+          catch(e) { adminIds = [adminSetting.value]; }
+        }
+        if (!adminIds.includes(newAdminId)) {
+          adminIds.push(newAdminId);
+          await prisma.setting.update({
+            where: { key: "telegram_chat_id" },
+            data: { value: JSON.stringify(adminIds) }
+          });
+        }
+        await editMessageText(chatId, messageId, `${callbackQuery.message.text}\n\n✅ KULLANICI ONAYLANDI (${new Date().toLocaleString('tr-TR')})`);
+        await sendMessage(newAdminId, "🎉 Erişim talebiniz yönetici tarafından onaylandı! Botu kullanmaya başlayabilirsiniz. /start yazarak menüyü görebilirsiniz.");
+
+      } else if (data.startsWith("reject_admin_")) {
+        const newAdminId = data.replace("reject_admin_", "");
+        await editMessageText(chatId, messageId, `${callbackQuery.message.text}\n\n❌ KULLANICI REDDEDİLDİ (${new Date().toLocaleString('tr-TR')})`);
+        await sendMessage(newAdminId, "❌ Erişim talebiniz yönetici tarafından reddedildi.");
+
+      } else if (data.startsWith("approve_")) {
         const resId = data.replace("approve_", "");
         await prisma.reservation.update({
           where: { id: resId },
