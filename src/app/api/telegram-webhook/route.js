@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { askGroqWithContext } from "@/lib/groq";
 
 export async function POST(request) {
   try {
@@ -35,72 +36,45 @@ export async function POST(request) {
       });
     };
 
-    // 2. Handle standard messages (to get Chat ID and handle Search)
+    // 2. Handle standard messages (to get Chat ID and handle AI Chat)
     if (body.message && body.message.chat && body.message.chat.id) {
-      const chatId = body.message.chat.id;
+      const chatId = body.message.chat.id.toString();
       const text = body.message.text || "";
       
-      // Save Chat ID to DB
-      await prisma.setting.upsert({
-        where: { key: "telegram_chat_id" },
-        update: { value: chatId.toString() },
-        create: { key: "telegram_chat_id", value: chatId.toString() },
+      // Check Privacy
+      const existingChatIdSetting = await prisma.setting.findUnique({
+        where: { key: "telegram_chat_id" }
       });
 
-      if (text === "/start") {
-        await sendMessage(chatId, "✅ HayalMest Rezervasyon Sistemi başarıyla bağlandı! Artık yeni rezervasyonlar buraya düşecek ve tek tıkla onaylayabileceksiniz.\n\nAyrıca bir müşterinin masasını öğrenmek için sadece ismini (örn: Tolga Kabadayı) yazabilirsiniz.");
+      if (!existingChatIdSetting || !existingChatIdSetting.value) {
+        // First time setup: claim ownership
+        await prisma.setting.upsert({
+          where: { key: "telegram_chat_id" },
+          update: { value: chatId },
+          create: { key: "telegram_chat_id", value: chatId },
+        });
+        await sendMessage(chatId, "✅ Sistem Yöneticisi olarak kaydedildiniz. Bot artık sadece size hizmet verecek.");
+      } else if (existingChatIdSetting.value !== chatId) {
+        // Unauthorized user
+        await sendMessage(chatId, "🚫 Bu özel bir işletme botudur. Yetkisiz erişim tespit edildi.");
         return NextResponse.json({ ok: true });
       }
 
-      // It's a text message, use it to search reservations
-      let searchStr = text.toLowerCase("tr-TR");
-      // Remove common words that are not part of the name
-      const ignoreWords = ["hangi", "masaya", "rezerve", "nerede", "masası", "masa", "nedir", "kim", "nerde", "oturuyor", "var mı"];
-      ignoreWords.forEach(w => {
-        searchStr = searchStr.replace(new RegExp(`\\b${w}\\b`, 'gi'), '');
-      });
-      searchStr = searchStr.replace(/[?!.]/g, '').trim();
-
-      if (searchStr.length > 2) {
-        // Search reservations by name
-        const results = await prisma.reservation.findMany({
-          where: {
-            name: {
-              contains: searchStr,
-              mode: 'insensitive',
-            }
-          },
-          include: {
-            tables: {
-              include: {
-                room: true
-              }
-            }
-          },
-          orderBy: {
-            date: 'desc'
-          },
-          take: 5
-        });
-
-        if (results.length > 0) {
-          let reply = `🔍 *Arama Sonuçları:*\n\n`;
-          results.forEach(res => {
-            const dateStr = res.date ? new Date(res.date).toLocaleDateString("tr-TR") : "Tarih Yok";
-            reply += `👤 *${res.name}* (${dateStr}) - ${res.guestCount} Kişi\n`;
-            if (res.tables && res.tables.length > 0) {
-              const tableNames = res.tables.map(t => `${t.room.name} -> ${t.name}`).join(", ");
-              reply += `🪑 Masalar: ${tableNames}\n`;
-            } else {
-              reply += `🪑 Masa: Henüz masa atanmamış.\n`;
-            }
-            reply += `\n`;
-          });
-          await sendMessage(chatId, reply, "Markdown");
-        } else {
-          await sendMessage(chatId, `⚠️ "${searchStr}" ismiyle eşleşen bir rezervasyon bulunamadı.`);
-        }
+      if (text === "/start") {
+        await sendMessage(chatId, "✅ HayalMest Yapay Zeka Asistanı aktif!\n\nBana restoranla ilgili her şeyi sorabilirsiniz. Örn:\n- 'Bugün kaç boş masamız var?'\n- 'Tolga hangi masada oturuyor?'\n- 'Yarınki doluluk oranımız nedir?'");
+        return NextResponse.json({ ok: true });
       }
+
+      // Send a typing action to let user know AI is thinking
+      await fetch(`https://api.telegram.org/bot${token}/sendChatAction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+      });
+
+      // Pass the query to Groq AI
+      const aiResponse = await askGroqWithContext(text);
+      await sendMessage(chatId, aiResponse, "Markdown");
       
       return NextResponse.json({ ok: true });
     }

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import styles from "./admin.module.css";
+import ChatbotWidget from "./components/ChatbotWidget";
 import {
   LayoutDashboard,
   Calendar,
@@ -93,6 +94,7 @@ export default function AdminLayout({ children }) {
           {children}
         </div>
       </main>
+      <ChatbotWidget />
     </div>
   );
 }
