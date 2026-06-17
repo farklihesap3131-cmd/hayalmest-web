@@ -16,11 +16,13 @@ export async function POST(request) {
     const token = tokenSetting.value;
 
     // Helper to send message
-    const sendMessage = async (chatId, text) => {
+    const sendMessage = async (chatId, text, parseMode = null) => {
+      const payload = { chat_id: chatId, text };
+      if (parseMode) payload.parse_mode = parseMode;
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text }),
+        body: JSON.stringify(payload),
       });
     };
 
@@ -33,9 +35,10 @@ export async function POST(request) {
       });
     };
 
-    // 2. Handle standard messages (to get Chat ID)
+    // 2. Handle standard messages (to get Chat ID and handle Search)
     if (body.message && body.message.chat && body.message.chat.id) {
       const chatId = body.message.chat.id;
+      const text = body.message.text || "";
       
       // Save Chat ID to DB
       await prisma.setting.upsert({
@@ -44,7 +47,61 @@ export async function POST(request) {
         create: { key: "telegram_chat_id", value: chatId.toString() },
       });
 
-      await sendMessage(chatId, "✅ HayalMest Rezervasyon Sistemi başarıyla bağlandı! Artık yeni rezervasyonlar buraya düşecek ve tek tıkla onaylayabileceksiniz.");
+      if (text === "/start") {
+        await sendMessage(chatId, "✅ HayalMest Rezervasyon Sistemi başarıyla bağlandı! Artık yeni rezervasyonlar buraya düşecek ve tek tıkla onaylayabileceksiniz.\n\nAyrıca bir müşterinin masasını öğrenmek için sadece ismini (örn: Tolga Kabadayı) yazabilirsiniz.");
+        return NextResponse.json({ ok: true });
+      }
+
+      // It's a text message, use it to search reservations
+      let searchStr = text.toLowerCase("tr-TR");
+      // Remove common words that are not part of the name
+      const ignoreWords = ["hangi", "masaya", "rezerve", "nerede", "masası", "masa", "nedir", "kim", "nerde", "oturuyor", "var mı"];
+      ignoreWords.forEach(w => {
+        searchStr = searchStr.replace(new RegExp(`\\b${w}\\b`, 'gi'), '');
+      });
+      searchStr = searchStr.replace(/[?!.]/g, '').trim();
+
+      if (searchStr.length > 2) {
+        // Search reservations by name
+        const results = await prisma.reservation.findMany({
+          where: {
+            name: {
+              contains: searchStr,
+              mode: 'insensitive',
+            }
+          },
+          include: {
+            tables: {
+              include: {
+                room: true
+              }
+            }
+          },
+          orderBy: {
+            date: 'desc'
+          },
+          take: 5
+        });
+
+        if (results.length > 0) {
+          let reply = `🔍 *Arama Sonuçları:*\n\n`;
+          results.forEach(res => {
+            const dateStr = res.date ? new Date(res.date).toLocaleDateString("tr-TR") : "Tarih Yok";
+            reply += `👤 *${res.name}* (${dateStr}) - ${res.guestCount} Kişi\n`;
+            if (res.tables && res.tables.length > 0) {
+              const tableNames = res.tables.map(t => `${t.room.name} -> ${t.name}`).join(", ");
+              reply += `🪑 Masalar: ${tableNames}\n`;
+            } else {
+              reply += `🪑 Masa: Henüz masa atanmamış.\n`;
+            }
+            reply += `\n`;
+          });
+          await sendMessage(chatId, reply, "Markdown");
+        } else {
+          await sendMessage(chatId, `⚠️ "${searchStr}" ismiyle eşleşen bir rezervasyon bulunamadı.`);
+        }
+      }
+      
       return NextResponse.json({ ok: true });
     }
 
