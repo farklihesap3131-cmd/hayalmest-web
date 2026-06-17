@@ -25,6 +25,9 @@ export async function GET(request) {
         },
         status: "APPROVED" // We only care about approved reservations for table mapping
       },
+      include: {
+        tables: true
+      },
       orderBy: { createdAt: "asc" }
     });
     

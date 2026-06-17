@@ -13,7 +13,17 @@ export async function PUT(request, { params }) {
     if (body.note !== undefined) data.note = body.note;
     if (body.date !== undefined) data.date = new Date(body.date);
     if (body.guestCount !== undefined) data.guestCount = parseInt(body.guestCount);
-    if (body.tableId !== undefined) data.tableId = body.tableId === null ? null : parseInt(body.tableId);
+    
+    // Many-to-Many assignment
+    if (body.tableIds !== undefined) {
+      if (body.tableIds === null || body.tableIds.length === 0) {
+        data.tables = { set: [] }; // Disconnect all
+      } else {
+        data.tables = {
+          set: body.tableIds.map(id => ({ id: parseInt(id) }))
+        };
+      }
+    }
 
     const reservation = await prisma.reservation.update({
       where: { id: Number(id) },

@@ -20,7 +20,8 @@ export default function TablesPage() {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [showTableModal, setShowTableModal] = useState(false);
-  const [tableForm, setTableForm] = useState({ name: "", shape: "RECTANGLE", capacity: 4 });
+  // Default sizes
+  const [tableForm, setTableForm] = useState({ name: "", shape: "RECTANGLE", capacity: 4, width: 100, height: 80, id: null });
 
   useEffect(() => {
     fetchRooms();
@@ -72,14 +73,32 @@ export default function TablesPage() {
   // ---------------------------------
   // Table Management
   // ---------------------------------
-  const handleCreateTable = async (e) => {
+  const openTableModal = (table = null) => {
+    if (table) {
+      setTableForm(table);
+    } else {
+      setTableForm({ name: "", shape: "RECTANGLE", capacity: 4, width: 100, height: 80, id: null });
+    }
+    setShowTableModal(true);
+  };
+
+  const handleSaveTable = async (e) => {
     e.preventDefault();
-    await fetch("/api/admin/tables", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...tableForm, roomId: activeRoomId, x: 50, y: 50 })
-    });
-    setTableForm({ name: "", shape: "RECTANGLE", capacity: 4 });
+    if (tableForm.id) {
+      // Update
+      await fetch("/api/admin/tables", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tableForm)
+      });
+    } else {
+      // Create
+      await fetch("/api/admin/tables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...tableForm, roomId: activeRoomId, x: 50, y: 50 })
+      });
+    }
     setShowTableModal(false);
     fetchRooms();
   };
@@ -99,7 +118,6 @@ export default function TablesPage() {
     e.target.setPointerCapture(e.pointerId);
     setDraggingTableId(table.id);
     
-    // Calculate offset from top-left of the table to the mouse cursor
     const rect = e.target.getBoundingClientRect();
     const canvasRect = canvasRef.current.getBoundingClientRect();
     
@@ -119,11 +137,9 @@ export default function TablesPage() {
     let newX = e.clientX - canvasRect.left - dragOffset.x;
     let newY = e.clientY - canvasRect.top - dragOffset.y;
     
-    // Grid snapping (snap to 10px grid)
     newX = Math.round(newX / 10) * 10;
     newY = Math.round(newY / 10) * 10;
 
-    // Update local state for smooth dragging
     setRooms(prevRooms => prevRooms.map(r => {
       if (r.id !== activeRoomId) return r;
       return {
@@ -137,14 +153,13 @@ export default function TablesPage() {
     if (!isEditMode || !draggingTableId) return;
     e.target.releasePointerCapture(e.pointerId);
     
-    // Save new position to DB
     const room = rooms.find(r => r.id === activeRoomId);
     const table = room.tables.find(t => t.id === draggingTableId);
     
     await fetch("/api/admin/tables", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: table.id, x: table.x, y: table.y, shape: table.shape, capacity: table.capacity, name: table.name })
+      body: JSON.stringify({ id: table.id, x: table.x, y: table.y, width: table.width, height: table.height, shape: table.shape, capacity: table.capacity, name: table.name })
     });
     
     setDraggingTableId(null);
@@ -153,10 +168,7 @@ export default function TablesPage() {
   // ---------------------------------
   // Reservation Assignment
   // ---------------------------------
-  const [draggedResId, setDraggedResId] = useState(null);
-
   const handleResDragStart = (e, resId) => {
-    setDraggedResId(resId);
     e.dataTransfer.setData("resId", resId);
   };
 
@@ -166,13 +178,32 @@ export default function TablesPage() {
     const resId = e.dataTransfer.getData("resId");
     if (!resId) return;
 
-    // Update reservation with new tableId
+    const res = reservations.find(r => r.id === parseInt(resId));
+    if (!res) return;
+
+    const currentTableIds = res.tables ? res.tables.map(t => t.id) : [];
+    
+    if (currentTableIds.includes(tableId)) return; // Already assigned to this table
+
+    const newTableIds = [...currentTableIds, tableId];
+    
+    // Check capacity
+    const room = rooms.find(r => r.id === activeRoomId);
+    const table = room.tables.find(t => t.id === tableId);
+    const currentAssignedCapacity = res.tables ? res.tables.reduce((acc, t) => acc + t.capacity, 0) : 0;
+    const totalNewCapacity = currentAssignedCapacity + table.capacity;
+
+    if (totalNewCapacity < res.guestCount) {
+      alert(`⚠️ Yetersiz Kapasite!\n\nBu rezervasyon ${res.guestCount} kişilik ancak atadığınız masaların toplam kapasitesi ${totalNewCapacity} kişi. \n\nLütfen bir masa daha ekleyin (Gruplama yapın).`);
+    }
+
+    // Update reservation with multiple tables
     await fetch(`/api/admin/reservations/${resId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tableId })
+      body: JSON.stringify({ tableIds: newTableIds })
     });
-    fetchReservations(); // Refresh reservations
+    fetchReservations();
   };
 
   const handleTableDragOver = (e) => {
@@ -180,21 +211,40 @@ export default function TablesPage() {
     e.preventDefault();
   };
 
-  const removeReservationFromTable = async (resId) => {
+  const removeReservationFromTable = async (resId, tableId) => {
+    const res = reservations.find(r => r.id === parseInt(resId));
+    if (!res) return;
+    
+    const currentTableIds = res.tables.map(t => t.id);
+    const newTableIds = currentTableIds.filter(id => id !== tableId);
+
     await fetch(`/api/admin/reservations/${resId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tableId: null })
+      body: JSON.stringify({ tableIds: newTableIds })
     });
     fetchReservations();
+  };
+
+  // Generate colors for linked tables based on reservation ID
+  const getReservationColor = (resId) => {
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
+    return colors[resId % colors.length];
   };
 
   // Render logic
   const activeRoom = rooms.find(r => r.id === activeRoomId);
 
+  // A reservation is fully assigned if total capacity of its tables >= guestCount
+  const isResFullyAssigned = (res) => {
+    const assignedCap = res.tables ? res.tables.reduce((acc, t) => acc + t.capacity, 0) : 0;
+    return assignedCap >= res.guestCount;
+  };
+
+  const pendingReservations = reservations.filter(r => !isResFullyAssigned(r));
+
   return (
     <div className={styles.container}>
-      {/* Top Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>Masa Yönetimi</h1>
         <div className={styles.headerControls}>
@@ -217,7 +267,6 @@ export default function TablesPage() {
       </div>
 
       <div className={styles.mainArea}>
-        {/* Canvas Area */}
         <div className={styles.canvasWrapper}>
           <div className={styles.roomTabs}>
             {rooms.map(room => (
@@ -244,36 +293,46 @@ export default function TablesPage() {
             onPointerUp={handlePointerUp}
           >
             {activeRoom && activeRoom.tables.map(table => {
-              // Find reservations for this table
-              const tableReservations = reservations.filter(r => r.tableId === table.id);
+              // Find all reservations for this specific table by checking their tables array
+              const tableReservations = reservations.filter(r => r.tables && r.tables.some(t => t.id === table.id));
               const isOccupied = tableReservations.length > 0;
 
               let shapeClass = styles.rectTable;
               if (table.shape === "CIRCLE") shapeClass = styles.circleTable;
               if (table.shape === "BOOTH") shapeClass = styles.boothTable;
 
+              // If occupied, use the first reservation's color for the border
+              const borderColor = (isOccupied && !isEditMode) ? getReservationColor(tableReservations[0].id) : "";
+
               return (
                 <div 
                   key={table.id}
                   className={`${styles.table} ${shapeClass} ${isOccupied && !isEditMode ? styles.occupied : ""} ${isEditMode ? styles.draggable : ""}`}
-                  style={{ transform: `translate(${table.x}px, ${table.y}px)` }}
+                  style={{ 
+                    transform: `translate(${table.x}px, ${table.y}px)`,
+                    width: `${table.width}px`,
+                    height: `${table.height}px`,
+                    borderColor: borderColor ? borderColor : undefined,
+                    backgroundColor: borderColor ? `${borderColor}22` : undefined
+                  }}
                   onPointerDown={(e) => handlePointerDown(e, table)}
                   onDragOver={handleTableDragOver}
                   onDrop={(e) => handleTableDrop(e, table.id)}
+                  onClick={() => isEditMode ? openTableModal(table) : null}
                 >
                   <span className={styles.tableName}>{table.name}</span>
                   <span className={styles.tableCap}>{table.capacity} Kişi</span>
                   
                   {isEditMode && (
-                    <button className={styles.deleteTableBtn} onClick={() => handleDeleteTable(table.id)}>×</button>
+                    <button className={styles.deleteTableBtn} onClick={(e) => { e.stopPropagation(); handleDeleteTable(table.id); }}>×</button>
                   )}
 
                   {!isEditMode && isOccupied && (
                     <div className={styles.tableResInfo}>
                       {tableReservations.map(tr => (
-                        <div key={tr.id} className={styles.trItem}>
+                        <div key={tr.id} className={styles.trItem} style={{ background: getReservationColor(tr.id) }}>
                           {tr.name} ({tr.guestCount})
-                          <button className={styles.unassignBtn} onClick={(e) => { e.stopPropagation(); removeReservationFromTable(tr.id); }}>X</button>
+                          <button className={styles.unassignBtn} onClick={(e) => { e.stopPropagation(); removeReservationFromTable(tr.id, table.id); }}>X</button>
                         </div>
                       ))}
                     </div>
@@ -285,7 +344,7 @@ export default function TablesPage() {
 
           {isEditMode && activeRoomId && (
             <div className={styles.canvasControls}>
-              <button className={styles.addTableBtn} onClick={() => setShowTableModal(true)}>+ Masa Ekle</button>
+              <button className={styles.addTableBtn} onClick={() => openTableModal()}>+ Masa Ekle</button>
             </div>
           )}
         </div>
@@ -293,25 +352,37 @@ export default function TablesPage() {
         {/* Right Sidebar (Reservations) */}
         {!isEditMode && (
           <div className={styles.sidebar}>
-            <h3 className={styles.sidebarTitle}>Atanmayı Bekleyenler</h3>
-            <p className={styles.sidebarSub}>{new Date(selectedDate).toLocaleDateString("tr-TR")} Tarihli Onaylanmış Rezervasyonlar</p>
+            <h3 className={styles.sidebarTitle}>Eksik / Atanmayanlar</h3>
+            <p className={styles.sidebarSub}>{new Date(selectedDate).toLocaleDateString("tr-TR")} - Masası Tamamlanmamış Rezervasyonlar</p>
             
             <div className={styles.resList}>
-              {reservations.filter(r => r.tableId === null).map(res => (
-                <div 
-                  key={res.id} 
-                  className={styles.resCard}
-                  draggable
-                  onDragStart={(e) => handleResDragStart(e, res.id)}
-                >
-                  <div className={styles.resName}>{res.name}</div>
-                  <div className={styles.resDetails}>👤 {res.guestCount} Kişi | 📞 {res.phone}</div>
-                  {res.note && <div className={styles.resNote}>"{res.note}"</div>}
-                </div>
-              ))}
+              {pendingReservations.map(res => {
+                const assignedCap = res.tables ? res.tables.reduce((acc, t) => acc + t.capacity, 0) : 0;
+                
+                return (
+                  <div 
+                    key={res.id} 
+                    className={styles.resCard}
+                    draggable
+                    onDragStart={(e) => handleResDragStart(e, res.id)}
+                    style={{ borderLeftColor: getReservationColor(res.id) }}
+                  >
+                    <div className={styles.resName}>{res.name}</div>
+                    <div className={styles.resDetails}>👤 {res.guestCount} Kişi | 📞 {res.phone}</div>
+                    
+                    {assignedCap > 0 && (
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#d97706", fontWeight: "bold" }}>
+                        Kısmen Atandı ({assignedCap} / {res.guestCount} Kapasite) - MASALARI BİRLEŞTİRİN
+                      </div>
+                    )}
+                    
+                    {res.note && <div className={styles.resNote}>"{res.note}"</div>}
+                  </div>
+                )
+              })}
               
-              {reservations.filter(r => r.tableId === null).length === 0 && (
-                <div className={styles.emptyRes}>Bu tarihe ait atanacak rezervasyon yok.</div>
+              {pendingReservations.length === 0 && (
+                <div className={styles.emptyRes}>Tüm rezervasyonlar başarıyla masalara atandı! 🎉</div>
               )}
             </div>
           </div>
@@ -343,8 +414,8 @@ export default function TablesPage() {
       {showTableModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h2>Masa / Loca Ekle</h2>
-            <form onSubmit={handleCreateTable}>
+            <h2>{tableForm.id ? "Masayı Düzenle" : "Masa Ekle"}</h2>
+            <form onSubmit={handleSaveTable}>
               <label className={styles.label}>İsim</label>
               <input 
                 className={styles.input} 
@@ -365,18 +436,45 @@ export default function TablesPage() {
                 <option value="BOOTH">Loca</option>
               </select>
 
-              <label className={styles.label}>Kapasite</label>
-              <input 
-                type="number" 
-                className={styles.input} 
-                value={tableForm.capacity} 
-                onChange={e => setTableForm({ ...tableForm, capacity: parseInt(e.target.value) })} 
-                required 
-                min="1"
-              />
+              <div style={{ display: "flex", gap: "1rem" }}>
+                <div style={{ flex: 1 }}>
+                  <label className={styles.label}>Kapasite</label>
+                  <input 
+                    type="number" 
+                    className={styles.input} 
+                    value={tableForm.capacity} 
+                    onChange={e => setTableForm({ ...tableForm, capacity: parseInt(e.target.value) })} 
+                    required 
+                    min="1"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem" }}>
+                <div style={{ flex: 1 }}>
+                  <label className={styles.label}>Genişlik (px)</label>
+                  <input 
+                    type="number" 
+                    className={styles.input} 
+                    value={tableForm.width} 
+                    onChange={e => setTableForm({ ...tableForm, width: parseInt(e.target.value) })} 
+                    required 
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className={styles.label}>Yükseklik (px)</label>
+                  <input 
+                    type="number" 
+                    className={styles.input} 
+                    value={tableForm.height} 
+                    onChange={e => setTableForm({ ...tableForm, height: parseInt(e.target.value) })} 
+                    required 
+                  />
+                </div>
+              </div>
 
               <div className={styles.modalActions}>
-                <button type="submit" className={styles.submitBtn}>Ekle</button>
+                <button type="submit" className={styles.submitBtn}>{tableForm.id ? "Güncelle" : "Ekle"}</button>
                 <button type="button" className={styles.cancelBtn} onClick={() => setShowTableModal(false)}>İptal</button>
               </div>
             </form>

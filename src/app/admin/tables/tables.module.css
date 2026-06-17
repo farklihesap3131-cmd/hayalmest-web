@@ -178,23 +178,17 @@
 }
 
 .rectTable {
-  width: 100px;
-  height: 80px;
   border-radius: 8px;
 }
 
 .circleTable {
-  width: 90px;
-  height: 90px;
   border-radius: 50%;
 }
 
 .boothTable {
-  width: 140px;
-  height: 80px;
   border-radius: 40px 40px 8px 8px;
   border-top-width: 8px;
-  border-top-color: #D4AF37;
+  border-top-style: solid;
 }
 
 .occupied {

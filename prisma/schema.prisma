@@ -50,8 +50,7 @@ model Reservation {
   guestCount Int
   status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
   note      String?
-  tableId   Int?
-  table     Table?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tables    Table[]  @relation("TableReservations")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -71,11 +70,13 @@ model Table {
   name        String
   x           Float         @default(0)
   y           Float         @default(0)
+  width       Int           @default(100)
+  height      Int           @default(80)
   shape       String        @default("RECTANGLE") // RECTANGLE, CIRCLE, BOOTH
   capacity    Int           @default(4)
   roomId      Int
   room        Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  reservations Reservation[]
+  reservations Reservation[] @relation("TableReservations")
 }
 
 model MenuCategory {

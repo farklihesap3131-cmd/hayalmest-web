@@ -11,6 +11,8 @@ export async function POST(request) {
         name: body.name,
         x: body.x || 0,
         y: body.y || 0,
+        width: body.width || 100,
+        height: body.height || 80,
         shape: body.shape || "RECTANGLE",
         capacity: body.capacity || 4,
         roomId: parseInt(body.roomId),
@@ -43,6 +45,10 @@ export async function PUT(request) {
         name: body.name,
         shape: body.shape,
         capacity: body.capacity,
+        width: body.width,
+        height: body.height,
+        x: body.x,
+        y: body.y
       }
     });
     return NextResponse.json(table);
